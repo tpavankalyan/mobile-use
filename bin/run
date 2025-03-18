@@ -1,0 +1,30 @@
+#!/usr/bin/env node
+
+const { mobileUse } = require("../dist");
+const { readFile, access } = require("node:fs/promises");
+const yargs = require("yargs");
+const { hideBin } = require("yargs/helpers");
+
+const argv = yargs(hideBin(process.argv))
+  .usage("Usage: $0 <command> [options]")
+  .demandCommand(1, "Please provide either a command string or a file path")
+  .help().argv;
+
+async function run() {
+  const input = argv._[0].toString();
+  let task;
+  try {
+    await access(input);
+    task = (await readFile(input, "utf-8")).trim();
+  } catch {
+    task = input;
+  }
+  const response = await mobileUse({
+    task,
+  });
+  return response.text;
+}
+
+run()
+  .catch((error) => console.error(error))
+  .then((result) => console.log(result));
