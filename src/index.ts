@@ -54,6 +54,16 @@ export async function mobileUse({
           return `Successfull opened ${name}`;
         },
       }),
+      listApps: tool({
+        parameters: z.object({
+          name: z.string().describe("Name of the package to filter."),
+        }),
+        description: "Use this to list packages.",
+        async execute({ name }) {
+          const list = await adbClient.listPackages(name);
+          return list.join("\n");
+        },
+      }),
       computer,
     },
   });

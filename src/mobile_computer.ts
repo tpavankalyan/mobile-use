@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { ADBClient } from "./adb_client";
 import { z } from "zod";
+import { wait } from "./utils";
 
 const Coordinate = z.array(z.number());
 
@@ -91,6 +92,10 @@ screenshot: Take a screenshot of the current screen.
           duration
         );
         return adbClient.dumpUI();
+      }
+
+      if (action === "wait") {
+        await wait(duration);
       }
     },
   });
