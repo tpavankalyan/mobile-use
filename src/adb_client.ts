@@ -1,10 +1,11 @@
 import { exec } from "child_process";
 import { promisify } from "util";
 import { parseUiDump } from "./ui_dump_parser";
+import { isTemplateExpression } from "typescript/lib/typescript";
 
 const execAsync = promisify(exec);
 
-const ANDROID_KEY_EVENTS: Record<string, string> = {
+const ANDROID_KEY_EVENTS: Record<string, string> = Object.entries({
   Enter: "KEYCODE_ENTER",
   Backspace: "KEYCODE_DEL",
   Tab: "KEYCODE_TAB",
@@ -14,7 +15,11 @@ const ANDROID_KEY_EVENTS: Record<string, string> = {
   ArrowRight: "KEYCODE_DPAD_RIGHT",
   Escape: "KEYCODE_ESCAPE",
   Home: "KEYCODE_HOME",
-};
+  Back: "KEYCODE_BACK",
+}).reduce((keyMap, [key, value]) => {
+  keyMap[key.toLowerCase().trim()] = value;
+  return keyMap;
+}, {} as Record<string, string>);
 
 interface Coordinate {
   x: number;
@@ -22,17 +27,23 @@ interface Coordinate {
 }
 
 export class ADBClient {
+  async init() {
+    await this.shell("settings put global window_animation_scale 0");
+    await this.shell("settings put global transition_animation_scale 0");
+    await this.shell("settings put global animator_duration_scale 0");
+  }
+
   async screenshot() {
     const options = {
       encoding: "binary" as const,
-      maxBuffer: 25 * 1024 * 1024, // Reduced buffer size to 25MB
+      maxBuffer: 5 * 1024 * 1024, // Reduced buffer size to 5MB
     };
-    const { stdout } = await execAsync(`adb shell screencap -p`, options);
+    const { stdout } = await execAsync(`adb exec-out screencap -p`, options);
     return Buffer.from(stdout, "binary");
   }
 
   async screenSize() {
-    const { stdout } = await this.shell("wm size");
+    const { stdout } = await this.execOut("wm size");
     const match = stdout.match(/Physical size: (\d+)x(\d+)/);
     if (!match) {
       throw new Error("Failed to get viewport size");
@@ -41,6 +52,10 @@ export class ADBClient {
       width: parseInt(match[1]),
       height: parseInt(match[2]),
     };
+  }
+
+  async execOut(command: string) {
+    return execAsync(`adb exec-out ${command}`);
   }
 
   async shell(command: string) {
@@ -71,7 +86,7 @@ export class ADBClient {
   }
 
   async keyPress(key: string) {
-    const androidKey = ANDROID_KEY_EVENTS[key];
+    const androidKey = ANDROID_KEY_EVENTS[key.toLowerCase()];
     if (!androidKey) {
       throw new Error(`Unsupported key: ${key}`);
     }
@@ -80,7 +95,7 @@ export class ADBClient {
   }
 
   async listPackages(filter?: string) {
-    const { stdout } = await this.shell(`pm list packages ${filter || ""}`);
+    const { stdout } = await this.execOut(`pm list packages ${filter || ""}`);
     return stdout
       .split("\n")
       .map((line) => line.replace("package:", "").trim())
@@ -88,7 +103,6 @@ export class ADBClient {
   }
 
   async openApp(packageName: string) {
-    // Launch app using package name without specifying activity
     const result = await this.shell(`monkey -p ${packageName} 1`);
     if (result.stderr && result.stderr.includes("No activities found")) {
       throw new Error(`Failed to open app: ${result.stderr}`);
@@ -98,13 +112,11 @@ export class ADBClient {
 
   async dumpUI() {
     try {
-      // Dump the current UI hierarchy directly
-      await this.shell("uiautomator dump");
-      // Read the dump file (it's automatically created at /sdcard/window_dump.xml)
-      const { stdout } = await this.shell("cat /sdcard/window_dump.xml");
-      // Clean up
-      await this.shell("rm /sdcard/window_dump.xml");
-      return JSON.stringify(parseUiDump(stdout));
+      const { stdout } = await this.execOut(
+        `uiautomator dump --compressed /dev/tty`
+      );
+      const ui = JSON.stringify(parseUiDump(stdout));
+      return ui;
     } catch (error) {
       throw new Error(`Failed to get UI hierarchy: ${error.message}`);
     }

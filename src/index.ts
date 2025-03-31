@@ -1,8 +1,8 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { generateText, LanguageModel, tool } from "ai";
 import { z } from "zod";
 import { ADBClient } from "./adb_client";
 import { createMobileComputer } from "./mobile_computer";
+import { openai } from "@ai-sdk/openai";
 export { ADBClient } from "./adb_client";
 
 const MobileUsePrompt = `You are an experienced mobile automation engineer. 
@@ -21,9 +21,10 @@ interface MobileUseOptions {
 
 export async function mobileUse({
   task,
-  llm = anthropic("claude-3-7-sonnet-20250219"),
+  llm = openai("gpt-4o"),
 }: MobileUseOptions) {
   const adbClient = new ADBClient();
+  await adbClient.init();
   const computer = await createMobileComputer(adbClient);
   const response = await generateText({
     messages: [

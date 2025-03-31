@@ -10,12 +10,7 @@ export const createMobileComputer = async (adbClient: ADBClient) => {
   const mobileComputer = tool({
     description: `Mobile tool to perform actions on a mobile device.
 You have the following actions:
-dump_ui: Use this action to get current screen and associated UI elements that you can interact with.
-tap: Use this to tap. You need to provide coordinate.
-swipe: Use this to swipe. You need to provide start_coordinate and end_coordinate to start your swipe to end.
-type: Use this to type what you want to. Provide what you want to type in text.
-press: Any key you want to press. Provide the key as text.
-screenshot: Take a screenshot of the current screen.
+
 `,
 
     experimental_toToolResultContent(result: any) {
@@ -30,14 +25,21 @@ screenshot: Take a screenshot of the current screen.
     },
     parameters: z.object({
       action: z.enum([
-        "dump_ui",
+        "ui_dump",
         "tap",
         "swipe",
         "type",
         "press",
         "wait",
         "screenshot",
-      ]),
+      ])
+        .describe(`ui_dump: Get UI elements you can interact with for the current screen.
+tap: Tap on the provided coordinate.
+swipe: Swipe from start_coordinate to end_coordinate.
+type: Type in the box.
+press: Press mobile key or button.
+screenshot: Take a screenshot of the current screen if UI dump is not helpful or where you need to see visuals. 
+      `),
       coordinate: Coordinate.optional(),
       start_coordinate: Coordinate.optional(),
       end_coordinate: Coordinate.optional(),
@@ -52,7 +54,7 @@ screenshot: Take a screenshot of the current screen.
       start_coordinate,
       end_coordinate,
     }) {
-      if (action === "dump_ui") {
+      if (action === "ui_dump") {
         return adbClient.dumpUI();
       }
 
