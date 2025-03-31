@@ -8,10 +8,7 @@ const Coordinate = z.array(z.number());
 export const createMobileComputer = async (adbClient: ADBClient) => {
   const viewportSize = await adbClient.screenSize();
   const mobileComputer = tool({
-    description: `Mobile tool to perform actions on a mobile device.
-You have the following actions:
-
-`,
+    description: `Mobile tool to perform actions on a mobile device.`,
 
     experimental_toToolResultContent(result: any) {
       return typeof result === "string"
