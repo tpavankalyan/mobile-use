@@ -6,6 +6,8 @@ Use AI to control your mobile.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE) [![Discord](https://img.shields.io/badge/discord-purple.svg)](https://discord.gg/BECB2t5x)
 
+https://github.com/user-attachments/assets/88ab0a2d-d6e6-4d80-922e-b13d3ae91c85
+
 </div>
 
 ## Supported
