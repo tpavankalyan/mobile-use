@@ -10,6 +10,10 @@
   "bin": {
     "mobile-use": "./bin/run"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/runablehq/mobile-use.git"
+  },
   "license": "MIT",
   "description": "Use AI to control your mobile",
   "dependencies": {
