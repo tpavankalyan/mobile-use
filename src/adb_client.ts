@@ -4,6 +4,7 @@ import { parseUiDump } from "./ui_dump_parser";
 import { homedir } from "os";
 import { join } from "path";
 import { existsSync } from "fs";
+import sharp from "sharp";
 
 const execAsync = promisify(exec);
 
@@ -115,15 +116,18 @@ export class ADBClient {
   }
 
   async screenshot() {
-    const options = {
-      encoding: "binary" as const,
-      maxBuffer: 5 * 1024 * 1024, // Reduced buffer size to 5MB
-    };
     const { stdout } = await execAsync(
       `"${this.adbPath}" exec-out screencap -p`,
-      options
+      {
+        encoding: "buffer",
+        maxBuffer: 25 * 1024 * 1024,
+      }
     );
-    return Buffer.from(stdout, "binary");
+    return sharp(stdout)
+      .png({
+        quality: 25,
+      })
+      .toBuffer();
   }
 
   async screenSize() {
